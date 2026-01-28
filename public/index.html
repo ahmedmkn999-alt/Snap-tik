@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snap Tik | تحميل تيك توك</title>
+    <style>
+        /* --- التصميم العام (Dark Theme) --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body {
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- الخلفية المتحركة --- */
+        .bg-animation {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 70%);
+            z-index: -1;
+        }
+        
+        .bg-lines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes moveGrid {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        /* --- الحاوية الرئيسية --- */
+        .container {
+            width: 90%; max-width: 600px;
+            text-align: center;
+            padding: 40px 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        h1 { font-size: 3rem; margin-bottom: 10px; letter-spacing: 2px; }
+        h1 span { color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.5); }
+        p.subtitle { color: #888; margin-bottom: 40px; }
+
+        /* --- حقل الإدخال --- */
+        .input-box { position: relative; width: 100%; margin-bottom: 20px; }
+        
+        input {
+            width: 100%; padding: 18px 25px;
+            border-radius: 50px; border: 2px solid #333;
+            background: #090909; color: #fff; font-size: 1rem;
+            outline: none; transition: 0.3s;
+        }
+        
+        input:focus { border-color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.1); }
+
+        /* --- زر التحميل --- */
+        button.main-btn {
+            width: 100%; padding: 18px;
+            border-radius: 50px; border: none;
+            background: #fff; color: #000;
+            font-size: 1.1rem; font-weight: bold;
+            cursor: pointer; transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        button.main-btn:hover { background: #ccc; transform: scale(1.02); }
+
+        /* --- منطقة النتيجة --- */
+        #result { margin-top: 30px; display: none; animation: fadeIn 0.5s ease; }
+        
+        .video-wrapper {
+            background: #111; padding: 15px;
+            border-radius: 15px; border: 1px solid #333;
+        }
+
+        video { width: 100%; border-radius: 10px; margin-bottom: 15px; }
+
+        .dl-link {
+            display: inline-block; padding: 12px 30px;
+            background: #333; color: #fff; text-decoration: none;
+            border-radius: 30px; border: 1px solid #555; transition: 0.3s;
+        }
+        .dl-link:hover { background: #fff; color: #000; }
+
+        /* --- الفوتر --- */
+        footer {
+            margin-top: 50px; font-size: 0.8rem; color: #555;
+            position: absolute; bottom: 20px;
+        }
+        footer span { color: #fff; }
+
+        /* --- Loader --- */
+        .loader {
+            display: none; border: 3px solid #333; border-top: 3px solid #fff;
+            border-radius: 50%; width: 30px; height: 30px;
+            animation: spin 1s linear infinite; margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="bg-animation"></div>
+    <div class="bg-lines"></div>
+
+    <div class="container">
+        <h1>Snap <span>Tik</span></h1>
+        <p class="subtitle">أسهل طريقة لتحميل فيديوهات تيك توك بدون علامة مائية</p>
+
+        <div class="input-box">
+            <input type="text" id="urlInput" placeholder="الصق رابط الفيديو هنا...">
+        </div>
+
+        <button class="main-btn" onclick="fetchVideo()">تحميل الفيديو</button>
+        
+        <div class="loader" id="loader"></div>
+
+        <div id="result">
+            <div class="video-wrapper">
+                <video id="videoPlayer" controls loop playsinline></video>
+                <br>
+                <a id="downloadBtn" href="#" target="_blank" class="dl-link">تحميل MP4</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Designed by <span>Ahmed Mohamed</span>
+    </footer>
+
+    <script>
+        async function fetchVideo() {
+            const url = document.getElementById('urlInput').value;
+            const loader = document.getElementById('loader');
+            const resultDiv = document.getElementById('result');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            if (!url) { alert("يرجى وضع الرابط!"); return; }
+
+            // إظهار اللودر وإخفاء النتيجة القديمة
+            loader.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            try {
+                // استدعاء السيرفر الخاص بنا (وليس RapidAPI مباشرة)
+                const response = await fetch(`/api/download?url=${encodeURIComponent(url)}`);
+                const data = await response.json();
+
+                loader.style.display = 'none';
+
+                // ملاحظة: هيكل البيانات (data structure) بيختلف حسب الـ API
+                // هنا بنفترض إن الرابط موجود في data.play أو data.data.play
+                // عدل السطر ده حسب استجابة الـ API الفعلي لو الفيديو مظهرش
+                const videoUrl = data.play || (data.data && data.data.play) || data.video_url;
+
+                if (videoUrl) {
+                    videoPlayer.src = videoUrl;
+                    downloadBtn.href = videoUrl;
+                    resultDiv.style.display = 'block';
+                } else {
+                    alert("عذراً، لم نتمكن من العثور على الفيديو. تأكد أن الرابط صحيح.");
+                    console.log(data); // عشان تشوف الخطأ في الكونسول
+                }
+
+            } catch (error) {
+                loader.style.display = 'none';
+                console.error(error);
+                alert("حدث خطأ في الاتصال.");
+            }
+        }
+    </script>
+</body>
+</html>
